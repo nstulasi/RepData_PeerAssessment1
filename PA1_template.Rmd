@@ -19,8 +19,6 @@ g<-ggplot(StepsByDay,aes(x=steps),na.rm=TRUE)
 g + geom_histogram(na.rm=TRUE)
 meanSteps<- mean(StepsByDay$steps, na.rm=TRUE)
 medianSteps <- quantile(StepsByDay$steps,0.5,na.rm=TRUE)
-head(meanSteps)
-head(medianSteps)
 ```
 Mean steps per day *`r meanSteps`*  
 Median steps per dat *`r medianSteps`*
@@ -29,23 +27,19 @@ Median steps per dat *`r medianSteps`*
 ```{r activityPattern, results="asis"}
 StepsByInterval<-tapply(activity$steps,activity$interval,mean,na.rm=TRUE)
 StepsByInterval<-data.frame(interval=as.numeric(names(StepsByInterval)),steps=StepsByInterval)
-now<-strptime("2014-01-01","%Y-%m-%d")
-StepsByInterval<-cbind(StepsByInterval,time=now+(StepsByInterval$interval*60))
-#TODO: Label the histogram
-p<-ggplot(StepsByInterval,aes(time,steps),na.rm=TRUE)
+p<-ggplot(StepsByInterval,aes(interval,steps),na.rm=TRUE)
 p+geom_line()
 max<-max(StepsByInterval$steps)
-maxStepsI<- StepsByInterval[StepsByInterval$steps==max,]$time
-strptime(maxStepsI)
+maxStepsI<- StepsByInterval[StepsByInterval$steps==max,]$interval
+
 ```
-Interval with the maximum average number of steps *`r `*  
+Interval with the maximum average number of steps *`r maxStepsI`*  
 
 ## Inputing missing values
 ```{r missingVals, results="asis"}
 missing<-sum(complete.cases(activity))
 activity2 <- merge(activity, StepsByInterval, by = "interval", all.x = TRUE)
-activity2 <- transform(activity2, steps = ifelse(is.na(steps.x), steps.y, steps.x))
-activity2 <- transform(activity2,steps.y = NULL,steps.x=NULL,time=NULL)
+activity2 <- transform(activity2, steps = ifelse(is.na(steps.x), steps.y, steps.x), steps.y = NULL,steps.x=NULL)
 
 StepsByDay<-tapply(activity2$step,activity2$date,sum)
 StepsByDay<-data.frame(date=as.Date(names(StepsByDay)),steps=StepsByDay)
@@ -54,8 +48,6 @@ g<-ggplot(StepsByDay,aes(x=steps),na.rm=TRUE)
 g + geom_histogram(na.rm=TRUE)
 meanSteps<- mean(StepsByDay$steps, na.rm=TRUE)
 medianSteps <- quantile(StepsByDay$steps,0.5,na.rm=TRUE)
-head(meanSteps)
-head(medianSteps)
 ```
 Total number of missing values = `r missing `
 Mean steps per day *`r meanSteps`*  
@@ -63,3 +55,14 @@ Median steps per dat *`r medianSteps`*
 By substituting the missing values with the average number of steps in an interval, the mean and median values do not change much but the number of days with the maximum average number of steps change.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r by_weekday}
+activity2<-cbind(activity2,weekday=ifelse((weekdays(activity2$date)=="Saturday")|(weekdays(activity2$date)=="Saturday"),"weekend","weekday"))
+#Still in process of editing
+StepsByInterval2<-tapply(activity2$steps,activity2$interval,mean,na.rm=TRUE)
+StepsByInterval2<-data.frame(interval=as.numeric(names(StepsByInterval)),steps=StepsByInterval)
+
+#p<-ggplot(StepsByInterval2,aes(interval,steps),na.rm=TRUE)
+#p+geom_line()+facet_wrap(.~weekday)
+#max<-max(StepsByInterval$steps)
+#maxStepsI<- StepsByInterval[StepsByInterval$steps==max,]$interval
+```
