@@ -1,20 +1,65 @@
 # Reproducible Research: Peer Assessment 1
-
+*Set the working directory to the repository before you execute this code*
 
 ## Loading and preprocessing the data
-
+```{r readdata}
+unzip("./activity.zip")
+activity<-read.csv("./activity.csv",colClasses=c("numeric","character","numeric"))
+activity$date <-as.Date(activity$date)
+```
 
 
 ## What is mean total number of steps taken per day?
-
-
+```{r meansteps}
+library(ggplot2)
+StepsByDay<-tapply(activity$step,activity$date,sum)
+StepsByDay<-data.frame(date=as.Date(names(StepsByDay)),steps=StepsByDay)
+#TODO: Label the histogram
+g<-ggplot(StepsByDay,aes(x=steps),na.rm=TRUE)
+g + geom_histogram(na.rm=TRUE)
+meanSteps<- mean(StepsByDay$steps, na.rm=TRUE)
+medianSteps <- quantile(StepsByDay$steps,0.5,na.rm=TRUE)
+head(meanSteps)
+head(medianSteps)
+```
+Mean steps per day *`r meanSteps`*  
+Median steps per dat *`r medianSteps`*
 
 ## What is the average daily activity pattern?
+```{r activityPattern, results="asis"}
+StepsByInterval<-tapply(activity$steps,activity$interval,mean,na.rm=TRUE)
+StepsByInterval<-data.frame(interval=as.numeric(names(StepsByInterval)),steps=StepsByInterval)
+now<-strptime("2014-01-01","%Y-%m-%d")
+StepsByInterval<-cbind(StepsByInterval,time=now+(StepsByInterval$interval*60))
+#TODO: Label the histogram
+p<-ggplot(StepsByInterval,aes(time,steps),na.rm=TRUE)
+p+geom_line()
+max<-max(StepsByInterval$steps)
+maxStepsI<- StepsByInterval[StepsByInterval$steps==max,]$time
+strptime(maxStepsI)
+```
+Interval with the maximum average number of steps *`r `*  
 
+## Inputing missing values
+```{r missingVals, results="asis"}
+missing<-sum(complete.cases(activity))
+activity2 <- merge(activity, StepsByInterval, by = "interval", all.x = TRUE)
+activity2 <- transform(activity2, steps = ifelse(is.na(steps.x), steps.y, steps.x))
+activity2 <- transform(activity2,steps.y = NULL,steps.x=NULL,time=NULL)
 
-
-## Imputing missing values
-
-
+StepsByDay<-tapply(activity2$step,activity2$date,sum)
+StepsByDay<-data.frame(date=as.Date(names(StepsByDay)),steps=StepsByDay)
+#TODO: Label the histogram
+g<-ggplot(StepsByDay,aes(x=steps),na.rm=TRUE)
+g + geom_histogram(na.rm=TRUE)
+meanSteps<- mean(StepsByDay$steps, na.rm=TRUE)
+medianSteps <- quantile(StepsByDay$steps,0.5,na.rm=TRUE)
+head(meanSteps)
+head(medianSteps)
+```
+Total number of missing values = `r missing `
+Mean steps per day *`r meanSteps`*  
+Median steps per dat *`r medianSteps`*
+By substituting the missing values with the average number of steps in an interval, the mean and median values do not change much but the number of days with the maximum average number of steps change.
 
 ## Are there differences in activity patterns between weekdays and weekends?
